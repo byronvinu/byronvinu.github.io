@@ -1,0 +1,30 @@
+project:
+  type: website
+
+website:
+  title: "Byron Vinueza"
+  navbar:
+    title: "&nbsp;BYRON&nbsp;<span class='icon-line'></span>VINUEZA"
+    left:
+      - text: About Me
+        href: about.qmd
+      - text: Blog
+        href: post.qmd
+      - text: Presentaciones
+        href: presentations/index.qmd
+
+  page-footer:
+    center: "© 2025 Byron Vinueza"
+
+format:
+  html:
+    theme: 
+      light: assets/bv-theme-light.scss
+      dark: assets/bv-theme-dark.scss
+    css: assets/bv-styles.css
+    code-block-border-left: true
+    highlight-style: 
+      light: assets/bv-light.theme
+      dark: assets/bv-dark.theme
+    smooth-scroll: true
+    link-external-newwindow: true

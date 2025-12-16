@@ -1,0 +1,257 @@
+---
+title: "Sentiment Classification for NPS Data:" 
+subtitle: "An Approach with Hybrid Models and Transfer Learning"
+author: "Byron Vinueza"
+date: "2025-12-18"
+categories: ["Presentaciones","NLP","Deep Learning","NPS"]
+description: "Exploración de técnicas avanzadas de clasificación de sentimientos en datos de NPS utilizando modelos híbridos y aprendizaje por transferencia."
+image: "img/wordcloud.png"
+format:
+  revealjs:
+    theme: [default]
+    slide-number: true
+    chalkboard: true
+    preview-links: auto
+    logo: ""
+    footer: | 
+      <div style="text-align: center; margin-top: 10px;">
+        <a href="../index.qmd" style="text-decoration: none;">
+          <button style="background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px;">
+            🏠 Inicio 
+          </button>
+        </a>
+      </div>  
+    transition: slide
+    background-transition: fade
+jupyter: python3
+---
+
+## Agenda {.smaller}
+::: {.incremental}
+::: {.columns}
+::: {.column width="50%"}
+
+1. **Introducción y Contexto**
+   - ¿Qué es NPS?
+   - Objetivos del proyecto
+
+2. **Flujo del Proyecto**
+   - Pipeline del procesamiento
+
+3. **Distribución de clases**
+   - Dataset y su distribución
+   - Técnicas de balanceo.
+
+:::
+::: {.column width="50%"}
+4. **Arquitecturas**
+   - LSTM Bidireccional + Attention
+   - Lematización + Baseline
+   - Modelo Híbrido
+   - Fine-Tuning con BETO
+
+5. **Resultados y Evaluación**
+   - Comparación de técnicas
+   - Métricas de rendimiento
+
+6. **Conclusiones y Recomendaciones**
+   - Resumen de hallazgos
+
+:::
+:::
+:::
+
+
+# ¿QUÉ ES NPS? {background-color="#1e3a8a" #what-is-nps .smaller}
+
+## ¿Qué es NPS? {.smaller}
+
+::: {.columns}
+::: {.column width="50%"}
+**Net Promoter Score (NPS)**
+
+- Métrica de satisfacción del cliente.
+- Escala de 0 a 10
+- Tres categorías:
+  - **Detractores** (0-6)
+  - **Pasivos** (7-8)
+  - **Promotores** (9-10)
+:::
+
+::: {.column width="50%"}
+```{python}
+#| name: nps_distribution
+#| echo: false
+#| fig-align: center
+import pandas as pd
+import altair as alt
+
+# Distribución NPS ordenada: 0-6, 7-8, 9-10
+nps_data = pd.DataFrame({
+    'Categoría': ['Detractor', 'Pasivo', 'Promotor'],
+    'Descripción': ['0-6', '7-8', '9-10'],
+    'Orden': [1, 2, 3],
+    'Color': ['#ef4444', '#f59e0b', '#10b981']
+})
+
+chart = alt.Chart(nps_data).mark_bar().encode(
+    x=alt.X('Categoría:N', 
+            title=None,
+            sort=['Detractor', 'Pasivo', 'Promotor']),
+    y=alt.Y('Descripción:N', 
+            title='Puntuación',
+            sort=['9-10', '7-8', '0-6']),  # Invertido: de arriba (9-10) a abajo (0-6)
+    color=alt.Color('Color:N', scale=None, legend=None),
+    tooltip=['Categoría:N', 'Descripción:N']
+).properties(
+    width=500,
+    height=300,
+    title='Categorías NPS'
+)
+chart
+
+```
+:::
+:::
+
+::: {.callout-tip icon=true}
+## Importancia
+- **Los comentarios de los clientes son fundamentales para entender las razones detrás de sus puntuaciones NPS.**
+- **Mide la lealtad y satisfacción del cliente, proporcionando insights valiosos para mejorar productos y servicios.**
+:::
+
+
+# OBJETIVOS {background-color="#38539dff" #objectives .smaller}
+
+## Objetivos del Proyecto {.smaller}
+
+
+::: {.callout-note icon=true}
+### Objetivo Principal
+- **El objetivo es construir un modelo de clasificación robusto y generalizable con alta sensibilidad (Recall) para la clase Detractor, minimizando los falsos negativos y apoyando el flujo de trabajo de resolución de quejas.**
+:::
+
+### Objetivos Específicos
+:::{.incremental}
+
+- Explorar técnicas avanzadas de procesamiento de lenguaje natural (NLP) para mejorar la precisión de la clasificación de sentimientos en datos de NPS.
+
+- Implementar y comparar modelos híbridos y enfoques de aprendizaje por transferencia para optimizar el rendimiento del modelo.
+
+- Evaluar el impacto de diferentes técnicas de balanceo de datos en la sensibilidad del modelo hacia la clase Detractor.
+:::
+
+# FLUJO DEL PROYECTO {background-color="#1e3a8a" #project-flow .smaller}
+
+## Pipeline de Procesamiento
+
+::: {.columns}
+::: {.column width="30%"}
+```{mermaid}
+%%{init: { "flowchart": { "nodeSpacing": 15, "rankSpacing": 20 }}}%%
+flowchart TD 
+    A["Extracción de Datos"] --> B["Preprocesamiento GPT"]
+    B --> C["Análisis Exploratorio "]
+    C --> D["Modelo  - Arquitectura "]
+    D --> E["Entrenamiento
+    del Modelo"]
+    E --> F["Evaluación y 
+    Validación"]
+    F --> D
+    
+    style A fill:#e0e7ff,stroke:#4f46e5,stroke-width:1px
+    style B fill:#fef3c7,stroke:#f59e0b,stroke-width:1px
+    style C fill:#dbeafe,stroke:#3b82f6,stroke-width:1px
+    style D fill:#e0f2fe,stroke:#0ea5e9,stroke-width:1px
+    style E fill:#dcfce7,stroke:#10b981,stroke-width:1px
+    style F fill:#d1fae5,stroke:#059669,stroke-width:1px
+
+```
+:::
+
+::: {.column width="70%"}
+
+**Paso Clave: Preprocesamiento con IA**
+
+- 🤖 **OpenAI GPT-3.5** para corrección automática de texto
+- ✍️ Corrección de ortografía y gramática
+
+::: {.callout-note}
+## Impacto del Preprocesamiento
+- Mejoró significativamente la calidad de los datos de entrada antes del análisis.
+:::
+:::
+:::
+
+# EXPLORACIÓN DE DATOS {background-color="#38539dff" #data-exploration .smaller}
+## Distribución de clases {.smaller}
+
+```{python}
+#| name: nps_class_distribution
+#| echo: false
+#| fig-align: center
+#| message: false
+#| warning: false
+
+import pandas as pd
+import matplotlib as plt
+
+# Cargar datos
+data = pd.DataFrame({
+    'Técnica': ['Sin balanceo', 'Undersampling', 'Oversampling', 'Hybrid (U=0.3,O=0.8)'],
+    'Total': [69923, 10419, 181260, 47126],
+    'Det': [3473, 3473, 60420, 14500],
+    'Pasivo': [6030, 3473, 60420, 14500],
+    'Promo': [60420, 3473, 60420, 18126]
+})
+# graficar para cada técnica la distribución de clases, un grafico por cada técnica
+fig, ax = plt.pyplot.subplots(1, 4, figsize=(20, 5))
+techniques = data['Técnica'].tolist()
+for i, technique in enumerate(techniques):
+    counts = [data.loc[i, 'Det'], data.loc[i, 'Pasivo'], data.loc[i, 'Promo']]
+    ax[i].bar(['Detractor', 'Pasivo', 'Promotor'], counts, color=['#ef4444', '#f59e0b', '#10b981'])
+    ax[i].set_title(f'Distribución de Clases - {technique}')
+    ax[i].set_ylabel('')
+plt.pyplot.tight_layout()
+plt.pyplot.show()
+
+```
+<!-- salto de linea -->
+<br>
+<br>
+
+```{python}
+#| echo: false
+#| message: false
+#| label: tbl-nps-class-distribution
+#| tbl-cap: "Distribución de clases por técnica de balanceo"
+#| fig-align: center
+
+import pandas as pd  
+from IPython.display import Markdown, display
+data = {
+    'Técnica': ['Sin balanceo', 'Undersampling', 'Oversampling', 'Hybrid (U=0.3,O=0.8)'],
+    'Total': [69923, 10419, 181260, 47126],
+    'Detractor': [3473, 3473, 60420, 14500],
+    'Pasivo': [6030, 3473, 60420, 14500],
+    'Promotor': [60420, 3473, 60420, 18126]
+}
+df = pd.DataFrame(data)
+display(Markdown(df.to_markdown(index=False)))
+```
+
+# ARQUITECTURAS DE MODELOS  {background-color="#1e3a8a" #architectures .smaller}
+
+## Baseline 
+### (LSTM Bidireccional + Attention) {.smaller}
+::: {.columns}
+::: {.column width="50%"}
+- **LSTM Bidireccional + Attention**
+  - Captura dependencias contextuales en ambas direcciones.
+  - Mecanismo de atención para enfocarse en palabras clave.
+
+:::
+::: {.column width="50%"}
+
+:::
+:::

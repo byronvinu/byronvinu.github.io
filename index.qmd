@@ -1,0 +1,46 @@
+---
+knitr:
+  opts_chunk: 
+    collapse: true
+execute: 
+  echo: false
+page-layout: full
+include-in-header: 
+  - _includes/fontawesome-2up.html
+  - _includes/mastodon.html
+---
+
+::: {.grid}
+::: {.g-col-12}
+[Hola, bienvenido!]{.home-header}
+:::
+
+::: {.g-col-12 .g-col-md-6}
+
+<div class="card h-100" id="card-first-color">
+<div class="card-body d-flex flex-column">
+<p class="card-text">Sobre mí, mis intereses y experiencia</p>
+<div style="margin-top: auto;"><a href="about.qmd" class="card-link heading-font">SOBRE MI</a></div>
+</div>
+</div>
+:::
+
+::: {.g-col-12 .g-col-md-6}
+<div class="card h-100" id="card-second-color">
+<div class="card-body d-flex flex-column">
+<p class="card-text"> Cosas que hago o aprendo en  <i class="fa-brands fa-r-project" aria-label="R project"></i> , Python , docker , ... </p>
+<div style="margin-top: auto;"><a href="posts.qmd" class="card-link second-color-link heading-font">POSTS</a></div>
+</div>
+</div>
+:::
+
+::: {.g-col-12 .g-col-md-6}
+<div class="card h-100" id="card-third-color">
+<div class="card-body d-flex flex-column">
+<p class="card-text"> Miscelánea de presentaciones </p>
+<div style="margin-top: auto;"><a href="presentations/index.qmd" class="card-link third-color-link heading-font">PRESENTACIONES</a></div>
+</div>
+</div>
+:::
+
+:::

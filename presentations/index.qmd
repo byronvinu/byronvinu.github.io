@@ -1,0 +1,9 @@
+---
+title: "Presentaciones 📊 "
+listing:
+  contents: "."
+  sort: "date desc"
+  type: grid 
+  fields: [image, date, title, description, categories] 
+  filter-ui: false
+---
