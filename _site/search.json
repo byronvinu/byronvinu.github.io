@@ -89,5 +89,12 @@
     "title": "Sentiment Classification for NPS Data:",
     "section": "Baseline (LSTM Bidireccional + Attention)",
     "text": "Baseline (LSTM Bidireccional + Attention)\n\n\n\nLSTM Bidireccional + Attention\n\nCaptura dependencias contextuales en ambas direcciones.\nMecanismo de atención para enfocarse en palabras clave."
+  },
+  {
+    "objectID": "presentations/NPS_Sentiment_Classification/index.html#baseline",
+    "href": "presentations/NPS_Sentiment_Classification/index.html#baseline",
+    "title": "Sentiment Classification for NPS Data:",
+    "section": "Baseline",
+    "text": "Baseline\n(LSTM Bidireccional + Attention)\n\n\n\nLSTM Bidireccional + Attention\n\nCaptura dependencias contextuales en ambas direcciones.\nMecanismo de atención para enfocarse en palabras clave."
   }
 ]
