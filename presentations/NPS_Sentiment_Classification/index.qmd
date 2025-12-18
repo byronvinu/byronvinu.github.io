@@ -13,14 +13,7 @@ format:
     chalkboard: true
     preview-links: auto
     logo: ""
-    footer: | 
-      <div style="text-align: center; margin-top: 10px;">
-        <a href="../index.qmd" style="text-decoration: none;">
-          <button style="background-color: #007bff; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px;">
-            🏠 Inicio 
-          </button>
-        </a>
-      </div>  
+    footer: "[byronvinu.rbind.io/](https://byronvinu.rbind.io/)" 
     transition: slide
     background-transition: fade
 jupyter: python3
@@ -125,20 +118,20 @@ chart
 
 ## Objetivos del Proyecto {.smaller}
 
+:::{.incremental}
 
-::: {.callout-note icon=true}
 ### Objetivo Principal
+
 - **El objetivo es construir un modelo de clasificación robusto y generalizable con alta sensibilidad (Recall) para la clase Detractor, minimizando los falsos negativos y apoyando el flujo de trabajo de resolución de quejas.**
-:::
 
 ### Objetivos Específicos
-:::{.incremental}
 
 - Explorar técnicas avanzadas de procesamiento de lenguaje natural (NLP) para mejorar la precisión de la clasificación de sentimientos en datos de NPS.
 
 - Implementar y comparar modelos híbridos y enfoques de aprendizaje por transferencia para optimizar el rendimiento del modelo.
 
 - Evaluar el impacto de diferentes técnicas de balanceo de datos en la sensibilidad del modelo hacia la clase Detractor.
+
 :::
 
 # FLUJO DEL PROYECTO {background-color="#1e3a8a" #project-flow .smaller}
@@ -242,16 +235,211 @@ display(Markdown(df.to_markdown(index=False)))
 
 # ARQUITECTURAS DE MODELOS  {background-color="#1e3a8a" #architectures .smaller}
 
-## Baseline 
-### (LSTM Bidireccional + Attention) {.smaller}
-::: {.columns}
-::: {.column width="50%"}
-- **LSTM Bidireccional + Attention**
-  - Captura dependencias contextuales en ambas direcciones.
-  - Mecanismo de atención para enfocarse en palabras clave.
+## Baseline {.smaller}
 
+![](img/modelo_baseline.png){fig-align="center" height="300px" width="600px"}
+
+:::{.callout-tip icon=true}
+## LSTM Bidireccional + Attention
+- *Capa de embedding* El texto de entrada se convierte en vectores de embedding usando Word2Vec.
+- *LSTM bidireccional* Captura dependencias contextuales en ambas direcciones
+- *Mecanismo de atención* Permite al modelo enfocarse en palabras clave relevantes para la clasificación.
+:::
+
+## Resultados Baseline (Grid Search) {.smaller}
+![](img/GridSearch_baseline.png){fig-align="center" height="600px" width="1200px"}
+
+## Métricas Baseline {.smaller}
+![](img/baseline_results.png){fig-align="center" height="600px" width="1200px"}
+
+
+## Lematización + Baseline {.smaller}
+![](img/modelo_lema_baseline.png){fig-align="center" height="300px" width="600px"}
+
+:::{.callout-tip icon=true}
+## Lematización + Baseline
+- *Lematización* Reduce las palabras a su forma base para disminuir la variabilidad.
+- *Arquitectura Baseline* Se utiliza la misma arquitectura que el modelo baseline.
+:::
+
+## Grid Search Lematización + Baseline {.smaller}
+![](img/GridSearch_lemabaseline.png){fig-align="center" height="600px" width="1200px"}
+
+## Métricas Lematización + Baseline {.smaller}
+
+![](img/lemabase_results.png){fig-align="center" height="600px" width="1200px"}
+
+## Modelo Híbrido {.smaller}
+![](img/hibrido_bert_embeding.png){fig-align="center" height="300px" width="600px"}
+
+:::{.callout-tip icon=true}
+## Modelo Híbrido  
+- *Tokenización*  del texto de entrada, mediante el tokenizador WordPiece específico de BETO.
+- *Embeddings preentrenados*  utilizando BETO para capturar representaciones semánticas ricas.
+- *Arquitectura Baseline* Utiliza la misma arquitectura que el modelo baseline.
+:::
+
+## Comparación Baseline vs Híbrido {.smaller}
+
+<!-- awesome table on quarto -->
+
+| Aspecto | Baseline  | BERT Híbrido  |
+|---------|---------------------|-------------------------|
+| **Embeddings** | Aprendidos desde cero (128d) | **BERT preentrenado (768d)**  |
+| **Modelado secuencial** | BiLSTM + Attention  | BiLSTM + Attention  |
+| **Parámetros BERT** | 0 | 110M (frozen, no entrenan) |
+| **Parámetros Entrenables** | ~4.2M | ~2.5M (LSTM+Attention+FC) |
+| **Conocimiento previo** | No | **Sí (Wikipedia, corpus español)**  |
+| **Velocidad entrenamiento** | Rápido | Medio (forward de BERT + train LSTM) |
+
+
+## Métricas Híbrido {.smaller}
+![](img/hibrido_results.png){fig-align="center" height="600px" width="1200px"}
+
+## Fine-Tuning con BETO {.smaller}
+![](img/fine_tuning_beto.png){fig-align="center" height="300px" width="600px"}
+
+:::{.callout-tip icon=true}
+## Fine-Tuning con BETO
+- *Tokenización* del texto de entrada mediante el tokenizador WordPiece específico de BETO.
+- *Modelo BETO completo* Se utiliza todo el modelo BETO, permitiendo que todos sus parámetros se ajusten durante el entrenamiento.
+:::
+
+## Métricas Macro Fine-Tuning BETO {.smaller}
+
+<!-- Como hacer la tabla mas pequeña -->
+<div style="font-size: 0.5em;">
+
+| **Técnica**               | **F1**     | **Recall** | **Precision** |
+| ------------------------- | ---------- | ---------- | ------------- |
+| Sin Balanceo (LR = 2e-5)  | **0.8022** | 0.7880     | **0.8176**    |
+| Sin Balanceo (LR = 5e-5)  | 0.7995     | 0.7856     | 0.8144        |
+| Class Weights (LR = 2e-5) | 0.7939     | 0.7977     | 0.7904        |
+| Class Weights (LR = 5e-5) | 0.7927     | 0.7999     | 0.7862        |
+| Híbrido (LR = 2e-5)       | 0.7733     | 0.8063     | 0.7457        |
+| Híbrido (LR = 5e-5)       | 0.7704     | 0.7982     | 0.7501        |
+| Oversampling (LR = 5e-5)  | 0.7715     | 0.8049     | 0.7437        |
+| Oversampling (LR = 2e-5)  | 0.7640     | 0.7895     | 0.7421        |
+| Undersampling (LR = 5e-5) | 0.7692     | 0.8135     | 0.7392        |
+| Undersampling (LR = 2e-5) | 0.7562     | **0.8218** | 0.7099        |
+</div>
+
+:::{.callout-tip icon=true}
+## Observaciones Fine-Tuning BETO
+- **Mejor F1 y Precisión**: El modelo sin balanceo con una tasa de aprendizaje de 2e-5 logró el mejor F1 (0.8022) y precisión (0.8176).
+- **Mejor Recall**: El modelo con undersampling y una tasa de aprendizaje de 2e-5 alcanzó el mejor recall (0.8218), crucial para identificar detractores, sin embargo, con una precisión más baja (0.7099)
+- **Class Weights**: Los modelos con pesos de clase muestran un equilibrio entre recall y precisión, siendo una buena opción para balancear ambos aspectos.
+:::
+
+## Métricas Fine-Tuning BETO {.smaller}
+
+<div style="font-size: 0.5em;">
+| **Métrica** | **Sin Balanceo (2e-5)** | **Sin Balanceo (5e-5)** | **Class Weights (2e-5)** | **Class Weights (5e-5)** |
+| ----------- | ----------------------- | ----------------------- | ------------------------ | ------------------------ |
+| F1 Prom     | 0.9785                  | 0.9783                  | 0.9765                   | 0.9762                   |
+| F1 Pas      | 0.7052                  | 0.6979                  | 0.6910                   | 0.6839                   |
+| F1 Det      | 0.7228                  | 0.7221                  | 0.7143                   | 0.7178                   |
+| Rec. Prom   | 0.9836                  | 0.9834                  | 0.9745                   | 0.9748                   |
+| Rec. Pas    | 0.6824                  | 0.6741                  | 0.7065                   | 0.6783                   |
+| Rec. Det    | 0.6978                  | 0.6993                  | 0.7122                   | 0.7468                   |
+| Prec. Prom  | 0.9735                  | 0.9733                  | 0.9786                   | 0.9777                   |
+| Prec. Pas   | 0.7296                  | 0.7233                  | 0.6762                   | 0.6897                   |
+| Prec. Det   | 0.7496                  | 0.7465                  | 0.7164                   | 0.6911                   |
+</div>
+
+:::{.callout-tip icon=true}
+## Observaciones Métricas por Clase Fine-Tuning BETO
+- **Desempeño por Clase**: El modelo sin balanceo muestra un desempeño significativamente superior en la clase Promotor en comparación con las otras clases.
+- **Recall Detractor**: Los modelos con class weights mejoran el recall para la clase Detractor, lo cual es crucial para identificar clientes insatisfechos.
+- **Precisión Pasivo**: La precisión para la clase Pasivo es consistentemente más baja en todos los modelos, indicando un desafío en clasificar correctamente esta categoría.
+:::
+
+# COMPARACIÓN DE MODELOS {background-color="#1e3a8a" #model-comparison .smaller}
+
+## F1 entre arquitecturas {.smaller}
+![](img/resumenF1.png){fig-align="center" height="300px" width="800px"}
+
+:::{.callout-tip icon=true}
+## Variaciones de F1
+- **BETO Fine-Tuning**: Muestra la mejor puntuación F1 macro, destacando su eficacia en la clasificación de sentimientos en datos de NPS.
+- **Modelos Híbridos y Baseline**: Aunque no alcanzan el rendimiento de BETO, los modelos híbridos y baseline con lematización ofrecen mejoras significativas sobre el baseline simple.
+:::
+
+## Métricas para fine-tuning BETO {.smaller}
+
+:::{.columns}
+::: {.column width="50%"}
+![](img/heatmap_metricas.png){fig-align="center" height="250px" }
 :::
 ::: {.column width="50%"}
+![](img/confusion_matrix.png){fig-align="center" height="250px" }
+:::
+:::
 
+:::{.callout-tip icon=true}
+## Análisis de Métricas y Matriz de Confusión
+- **Heatmap de Métricas**: Permite visualizar el rendimiento detallado de cada modelo en términos de F1, Recall y Precisión para cada clase.
+- **Matriz de Confusión**: Destaca la capacidad del modelo para clasificar correctamente las instancias, especialmente en la clase Detractor, que es crucial para el objetivo del proyecto.
+:::
+
+# CONCLUSIONES {background-color="#38539dff" #conclusions .smaller}
+
+## Conclusiones  {.smaller}
+
+:::{.incremental}
+
+- El modelo Fine-Tuned Beto logró un mayor performance que las otras arquitecturas en todas las métricas evaluadas, alcanzando un mejor desempeño a nivel macro y por clase.
+
+- El modelo Fine-Tuned BETO con Class Weights se establece como la alternativa más adecuada para el despliegue, logrando el equilibrio óptimo entre un alto Recall para la Clase Detractor (en línea con el enfoque Omotenashi) y un rendimiento general estable.
+
+- La lematización no mostro mejoras en el desempeño del modelo baseline, sugiriendo que la reducción de variabilidad en las palabras no siempre conduce a mejores resultados en tareas de clasificación de texto.
+
+::: 
+
+# BONUS: Aplicación con Reviews de Google {background-color="#1e3a8a" #practical-application .smaller}
+
+## Aplicación Práctica {.smaller}
+
+:::{.callout-tip icon=true}
+## Detractor 
+Text: No crean en las  opiniones están borrando las malas reseñas 1000 veces Metro el del condado nunca atiende aquí
+Predicted label: DETRACTOR with confidence 0.9980
+CALIFICACION: 1
+:::
+
+:::{.callout-tip icon=true}
+## Promotor
+Text: Excelente atención rápides en el mantenimiento vehicular
+Predicted label: PROMOTOR with confidence 0.9957
+CALIFICACION: 5
+:::
+
+:::{.callout-tip icon=true}
+## Detractor
+Text: Terrible la atención, dañaron el radio del carro, la peor experiencia. No quiero volver más nunca
+Predicted label: DETRACTOR with confidence 0.9981
+CALIFICACION: 1
+:::
+
+:::{.callout-tip icon=true}
+## Pasivo
+Text: Algo extraño, buscábamos el corolla cross,  de contado no puedes comprarlo porque no está disponible, pero con su sistema "toyota siempre nuevo" ahí si. Es decir, prefieren que te endeudes para nunca terminar de pagar un auto en lugar de que te lo lleves a casa siendo completamente tuyo.
+Predicted label: PASIVO with confidence 0.9664
+CALIFICACION: 3
+:::
+
+## Distribución de predicciones {.smaller}
+
+:::{.columns}
+::: {.column width="50%"}
+![](img/pred_google.png){fig-align="center" height="230px" }
+:::
+::: {.column width="50%"}
+![](img/tablero_resenas.png){fig-align="center" height="230px" }
 :::
 :::
+
+![](img/nps_google.png){fig-align="center" height="260px" width="600px"}
+
+# GRACIAS! {background-color="#38539dff" #thank-you .smaller}
+## ¡Gracias por su atención! {.smaller}
